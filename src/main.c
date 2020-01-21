@@ -122,14 +122,19 @@ static size_t raw_base64_decode(unsigned char* input, unsigned char* output, int
                     *error = 1;
                 }
 
-                /** @bug: Strings that are of a length that
-                 *  is a multiple of three trigger a pad of
-                 *  zero, so the buffer containing the last
-                 *  three characters of the output string
-                 *  gets printed twice.
+                /** Check that a pad is actually required,
+                 *  otherwise strings of a length that
+                 *  is a multiple of three would trigger the
+                 *  for loop 3-pad times (which with a pad
+                 *  of zero would equal 3). This would then
+                 *  cause the buffer containing the last
+                 *  three characters of the output string to
+                 *  get printed twice, i.e... hello!lo!
                  */
-                for (x = 0; x < 3 - pad; x++) {
-                    *output++ = buffer[x];
+                if (pad) {
+                    for (x = 0; x < 3 - pad; x++) {
+                        *output++ = buffer[x];
+                    }
                 }
 
                 return output_length;
