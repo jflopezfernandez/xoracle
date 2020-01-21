@@ -10,6 +10,11 @@
 #include <errno.h>
 #include <time.h>
 
+#include <unistd.h>
+
+#include <sys/types.h>
+#include <sys/random.h>
+
 #if !defined(FALSE) || !defined(TRUE)
 enum { FALSE = 0, TRUE = !FALSE };
 #endif

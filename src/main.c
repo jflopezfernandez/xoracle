@@ -21,6 +21,15 @@ int main(int argc, char *argv[])
             printf("%s\n", (char *) decoded);
             free(decoded);
         }
+    } else if (strcmp(*argv, "random") == 0) {
+        size_t length = 32;
+        unsigned char* buffer = allocate_memory(length);
+        /*ssize_t status = */getrandom(buffer, length, 0);
+        unsigned char* encoded = base64encode(buffer, length, 0);
+        printf("%s\n", (char *) buffer);
+        printf("%s\n", (char *) encoded);
+        free(buffer);
+        free(encoded);
     }
 
     return EXIT_SUCCESS;
