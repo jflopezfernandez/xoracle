@@ -68,6 +68,197 @@ unsigned char* base64encode(unsigned char* input, size_t length, int wrap) {
     return output;
 }
 
+static char b64revtb[256] = {
+    -3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*   0-15 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*  16-31 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, /*  32-47 */
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, /*  48-63 */
+    -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, /*  64-79 */
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, /*  80-95 */
+    -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, /*  96-111 */
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1, /* 112-127 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 128-143 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 144-159 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 160-175 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 176-191 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 192-207 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 208-223 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 224-239 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 240-255 */
+};
+
+static size_t raw_base64_decode(unsigned char* input, unsigned char* output, int strict, int* error) {
+    /** Reset the error value in case it contains an error
+     *  from a previous function call.
+     */
+    *error = 0;
+
+    /** Variable to indicate to the caller the length of the
+     *  decoded string. The original (pre-base64 encoded)
+     *  string could have been binary data, containing zero-
+     *  valued bytes (\x00), which would be interpreted by
+     *  library functions as null-terminators. To prevent
+     *  this, we explicitly return the size of the decoded
+     *  buffer.
+     */
+    size_t output_length = 0;
+
+    /** Pointer variable for iterating over the input buffer
+     *  character by character.
+     */
+    unsigned char* p = input;
+
+    unsigned char buffer[3] = { 0 };
+
+    unsigned char pad = 0;
+
+    int x = 0;
+
+    while (!pad) {
+        switch ((x = b64revtb[*p++])) {
+            /* Null-terminator */
+            case -3: {
+                if (((p - 1) - input) % 4) {
+                    *error = 1;
+                }
+
+                /** @bug: Strings that are of a length that
+                 *  is a multiple of three trigger a pad of
+                 *  zero, so the buffer containing the last
+                 *  three characters of the output string
+                 *  gets printed twice.
+                 */
+                for (x = 0; x < 3 - pad; x++) {
+                    *output++ = buffer[x];
+                }
+
+                return output_length;
+            } break;
+
+            /* Padding character. Invalid here */
+            case -2: {
+                if (((p - 1) - input) % 4 < 2) {
+                    *error = 1;
+                    return output_length;
+                } else if (((p - 1) - input) % 4 == 2) {
+                    /** Make sure the input string is
+                     *  appropriately padded.
+                     */
+                    if (*p != '=') {
+                        *error = 1;
+                        return output_length;
+                    }
+
+                    buffer[2] = 0;
+                    pad = 2;
+                    ++output_length;
+                    break;
+                } else {
+                    pad = 1;
+                    output_length += 2;
+                    break;
+                }
+
+                fprintf(stderr, "Exiting via call to case -2\n");
+
+                return output_length;
+            } break;
+
+            /* Invalid character in the input */
+            case -1: {
+                /* TODO: Make strict behavior the default */
+                if (strict) {
+                    *error = 2;
+                    return output_length;
+                }
+            } break;
+
+            default: {
+                switch (((p - 1) - input) % 4) {
+                    case 0: {
+                        buffer[0] = x << 2;
+                    } break;
+
+                    case 1: {
+                        buffer[0] |= (x >> 4);
+                        buffer[1]  = (x << 4);
+                    } break;
+
+                    case 2: {
+                        buffer[1] |= (x >> 2);
+                        buffer[2]  = (x << 6);
+                    } break;
+
+                    case 3: {
+                        buffer[2] |= x;
+                        output_length += 3;
+
+                        for (x = 0; x < 3 - pad; x++) {
+                            *output++ = buffer[x];
+                        }
+                    } break;
+                }
+            } break;
+        }
+    }
+
+    for (x = 0; x < 3 - pad; x++) {
+        *output++ = buffer[x];
+    }
+
+    return output_length;
+}
+
+/** base64decode
+ * 
+ *  [Description]
+ * 
+ *  Error Values:
+ * 
+ *      -1  Padding error
+ *      -2  Strict checking requested (and failed)
+ *      -3  malloc() failed
+ * 
+ *  Notes:
+ * 
+ *      In the current implementation of allocate_memory,
+ *      any failure to allocate heap memory is handled by
+ *      immediately exiting the program. There is therefore
+ *      no way for base64decode to return a -3 error code,
+ *      as program execution will not continue far enough to
+ *      do so in that scenario.
+ */
+unsigned char* base64decode(unsigned char* input, size_t* length, int strict, int* error) {
+    /* Allocate memory block for the decoded string */
+    unsigned char* output = allocate_memory(3 * (strlen((const char*) input) / 4 + 1));
+
+    /* Call the decoding function */
+    *length = raw_base64_decode(input, output, strict, error);
+
+    /** Should raw_base64_decode fail for any reason, it
+     *  will modify the error variable with the appropriate
+     *  code. It is therefore important to check this after
+     *  each call to raw_base64_decode.
+     */
+    if (*error) {
+        /* Free the heap memory */
+        free(output);
+
+        /** Make sure the output variable no longer points
+         *  to the address that held the now-invalidated
+         *  data buffer.
+         */
+        output = NULL;
+
+        /** Set the length parameter to zero, as the reply
+         *  buffer now contains nothing.
+         */
+        *length = 0;
+    }
+
+    return output;
+}
+
 int main(int argc, char *argv[])
 {
     if (argc == 1) {
@@ -76,10 +267,18 @@ int main(int argc, char *argv[])
     }
 
     while (*++argv) {
+        printf("%s\n", *argv);
+
         size_t length = strlen(*argv);
         unsigned char* encoded = base64encode((unsigned char *) *argv, length, 0);
-        printf("%s: %s\n", *argv, encoded);
+        printf("%s\n", encoded);
+
+        int error = 0;
+        unsigned char* decoded = base64decode((unsigned char *) encoded, &length, 0, &error);
+        printf("%s\n", (char *) decoded);
+
         free(encoded);
+        free(decoded);
     }
 
     return EXIT_SUCCESS;
