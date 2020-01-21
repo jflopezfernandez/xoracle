@@ -10,4 +10,10 @@
 #include <errno.h>
 #include <time.h>
 
+#if !defined(FALSE) || !defined(TRUE)
+enum { FALSE = 0, TRUE = !FALSE };
+#endif
+
+#include "memory.h"
+
 #endif /* PROJECT_INCLUDES_XORACLE_H */
