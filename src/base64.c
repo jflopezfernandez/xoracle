@@ -139,6 +139,10 @@ static size_t raw_base64_decode(unsigned char* input, unsigned char* output, int
                  *  cause the buffer containing the last
                  *  three characters of the output string to
                  *  get printed twice, i.e... hello!lo!
+                 * 
+                 *  @bug Strings of a length other than
+                 *  three are now again missing the last bit
+                 *  of the buffer.
                  */
                 if (pad) {
                     for (x = 0; x < 3 - pad; x++) {
