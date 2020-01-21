@@ -21,5 +21,6 @@ enum { FALSE = 0, TRUE = !FALSE };
 
 #include "base64.h"
 #include "memory.h"
+#include "rc4.h"
 
 #endif /* PROJECT_INCLUDES_XORACLE_H */

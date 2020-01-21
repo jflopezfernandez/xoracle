@@ -30,6 +30,27 @@ int main(int argc, char *argv[])
         printf("%s\n", (char *) encoded);
         free(buffer);
         free(encoded);
+    } else if (strcmp(*argv, "encrypt") == 0) {
+        while (*++argv) {
+            unsigned char* key_data = (unsigned char *) "password";
+            size_t key_data_length = strlen((char *) key_data);
+            rc4_key key;
+            prepare_key(key_data, key_data_length, &key);
+
+            size_t length = strlen(*argv);
+            unsigned char* buffer = allocate_memory(length + 1);
+            rc4(buffer, length, &key);
+
+            unsigned char* encoded = base64encode(buffer, length, 0);
+            printf("%s\n", (char *) buffer);
+            printf("%s\n", (char *) encoded);
+
+            free(buffer);
+            free(encoded);
+        }
+    } else {
+        fprintf(stderr, "Unknown operation: %s\n", *argv);
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
