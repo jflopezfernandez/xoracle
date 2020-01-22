@@ -5,7 +5,7 @@ MKDIR := mkdir -p
 RM := rm -f
 
 CC := gcc
-CFLAGS := -std=c17 -Wall -Wextra -Wpedantic -Werror -O1 -g3 -ggdb
+CFLAGS := -std=c17 -Wall -Wextra -Wpedantic -Werror -O1 -g3 -ggdb -Wno-parentheses
 CPPFLAGS := -Iinclude -D_GNU_SOURCE -D_POSIX_SOURCE
 LDFLAGS := 
 LIBS :=

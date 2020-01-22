@@ -48,6 +48,8 @@ int main(int argc, char *argv[])
             free(buffer);
             free(encoded);
         }
+    } else if (strcmp(*argv, "sha1") == 0) {
+        testsha1();
     } else {
         fprintf(stderr, "Unknown operation: %s\n", *argv);
         return EXIT_FAILURE;

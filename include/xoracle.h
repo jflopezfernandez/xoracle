@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <time.h>
 
 #include <unistd.h>
@@ -22,5 +23,6 @@ enum { FALSE = 0, TRUE = !FALSE };
 #include "base64.h"
 #include "memory.h"
 #include "rc4.h"
+#include "sha1.h"
 
 #endif /* PROJECT_INCLUDES_XORACLE_H */
