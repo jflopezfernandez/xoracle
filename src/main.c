@@ -20,9 +20,43 @@ static void disable_memory_dumping(void) {
     }
 }
 
+static void lock_process_page_table(void) {
+    /* Clear the error flag before calling setrlimit */
+    errno = 0;
+
+    int result_code = mlockall(MCL_CURRENT | MCL_FUTURE);
+
+    if (result_code != EXIT_SUCCESS) {
+        switch (errno) {
+            case EAGAIN: {
+                fprintf(stderr, "Some or all of the memory identified by the operation could not be locked when the call was made\n");
+            } break;
+
+            case EINVAL: {
+                fprintf(stderr, "Error: Invalid flag argument\n");
+            } break;
+
+            case ENOMEM: {
+                fprintf(stderr, "Error: Locking  all  of  the pages currently mapped into the address space of the process would exceed an implementation-defined limit on the amount of memory that the process may lock.\n");
+            } break;
+
+            case EPERM: {
+                fprintf(stderr, "Error: Insufficient privileges to lock process page table\n");
+            }; break;
+
+            default: {
+                fprintf(stderr, "Error: mlock() failed with unspecified error\n");
+            } break;
+        }
+
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     disable_memory_dumping();
+    lock_process_page_table();
 
     if (argc == 1) {
         fprintf(stderr, "No input(s).\n");
