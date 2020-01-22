@@ -1,8 +1,29 @@
 
 #include "xoracle.h"
 
+/** Prevent the creation of a core file should the program
+ *  encounter any critical errors during execution. Core
+ *  files could potentially contain sensitive information
+ *  that could be recovered by a hostile actor.
+ */
+static void disable_memory_dumping(void) {
+    struct rlimit resource_limit;
+    resource_limit.rlim_cur = 0;
+    resource_limit.rlim_max = 0;
+
+    /* Clear the error flag before calling setrlimit */
+    errno = 0;
+
+    if (setrlimit(RLIMIT_CORE, &resource_limit)) {
+        fprintf(stderr, "[Fatal Error] %s: %s\n", "Could not disable memory dumps", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(int argc, char *argv[])
 {
+    disable_memory_dumping();
+
     if (argc == 1) {
         fprintf(stderr, "No input(s).\n");
         return EXIT_FAILURE;

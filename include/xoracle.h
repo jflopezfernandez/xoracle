@@ -13,8 +13,10 @@
 
 #include <unistd.h>
 
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/random.h>
+#include <sys/resource.h>
 
 #if !defined(FALSE) || !defined(TRUE)
 enum { FALSE = 0, TRUE = !FALSE };
