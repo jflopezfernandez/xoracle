@@ -36,6 +36,17 @@ void prepare_key(unsigned char* key_data_ptr, int key_data_len, rc4_key* key) {
     }
 }
 
+/** This is the RC4 encryption cipher, with the added 
+ *  modification of discarding the initial N bytes of the
+ *  generated keystream (with the default setting being
+ *  3072 discarded bytes).
+ * 
+ *  @todo Incorporate MAC
+ *  @todo Incorporate hashed initialization vector (IV)
+ * 
+ *  @see http://web.archive.org/web/20080404222417/http://cypherpunks.venona.com/date/1994/09/msg00304.html
+ *  @see http://users.zetnet.co.uk/hopwood/crypto/scan/cs.html#RC4-drop
+ */
 void rc4(unsigned char* buffer_ptr, int buffer_len, rc4_key* key) {
     unsigned char x = key->x;
     unsigned char y = key->y;
